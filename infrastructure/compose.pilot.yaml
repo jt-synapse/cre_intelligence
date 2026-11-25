@@ -1,0 +1,65 @@
+# Use with external managed services. Provision roles and run migrate before starting the runtime.
+name: cre-pilot
+x-storage: &storage
+  CRE_ENV: production
+  CRE_S3_BUCKET: ${CRE_S3_BUCKET:?private bucket required}
+  CRE_S3_ENDPOINT: ${CRE_S3_ENDPOINT:-}
+  AWS_REGION: ${AWS_REGION:-us-east-1}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+x-api: &api
+  build: ..
+  image: cre-intelligence-api:${CRE_RELEASE:-pilot}
+services:
+  migrate:
+    <<: *api
+    profiles: ["operator"]
+    environment:
+      CRE_MIGRATION_URL: ${CRE_MIGRATION_URL:?migration URL required}
+      CRE_RUNTIME_ROLE: ${CRE_RUNTIME_ROLE:-cre_runtime}
+      CRE_WORKER_ROLE: ${CRE_WORKER_ROLE:-cre_worker}
+    command: ["sh","-ec","alembic upgrade head && python -m cre.admin grant --runtime $$CRE_RUNTIME_ROLE --worker $$CRE_WORKER_ROLE"]
+  api:
+    <<: *api
+    restart: unless-stopped
+    environment:
+      <<: *storage
+      DATABASE_URL: ${CRE_RUNTIME_URL:?runtime URL required}
+      CRE_OIDC_ISSUER: ${CRE_OIDC_ISSUER:?issuer required}
+      CRE_OIDC_AUDIENCE: ${CRE_OIDC_AUDIENCE:?audience required}
+      CRE_OIDC_JWKS_URL: ${CRE_OIDC_JWKS_URL:?JWKS URL required}
+    healthcheck:
+      test: ["CMD","python","-c","import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready',timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  worker:
+    <<: *api
+    restart: unless-stopped
+    command: ["python","-m","cre.workflows.worker"]
+    environment:
+      <<: *storage
+      DATABASE_URL: ${CRE_WORKER_URL:?worker URL required}
+      CRE_RESEARCH_PROVIDER: ${CRE_RESEARCH_PROVIDER:-disabled}
+      CRE_RESEARCH_GATEWAY: ${CRE_RESEARCH_GATEWAY:-}
+      CRE_RESEARCH_GATEWAY_TOKEN: ${CRE_RESEARCH_GATEWAY_TOKEN:-}
+      CRE_OPENAI_MODEL: ${CRE_OPENAI_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CRE_RESEARCH_INPUT_USD_PER_MILLION: ${CRE_RESEARCH_INPUT_USD_PER_MILLION:-}
+      CRE_RESEARCH_OUTPUT_USD_PER_MILLION: ${CRE_RESEARCH_OUTPUT_USD_PER_MILLION:-}
+  web:
+    build: ../web
+    image: cre-intelligence-web:${CRE_RELEASE:-pilot}
+    restart: unless-stopped
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      CRE_API_URL: http://api:8000
+      CRE_OIDC_ISSUER: ${CRE_OIDC_ISSUER}
+      CRE_OIDC_CLIENT_ID: ${CRE_OIDC_CLIENT_ID:?public PKCE client id required}
+      CRE_OIDC_AUDIENCE: ${CRE_OIDC_AUDIENCE}
+      CRE_OIDC_SCOPE: ${CRE_OIDC_SCOPE:-openid profile email}
+      CRE_BASEMAP_STYLE_URL: ${CRE_BASEMAP_STYLE_URL:-}
+    depends_on:
+      api:
+        condition: service_healthy

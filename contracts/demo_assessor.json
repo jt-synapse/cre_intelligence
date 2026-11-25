@@ -1,0 +1,41 @@
+{
+  "source_key": "cre_synthetic",
+  "dataset_key": "demo_assessor",
+  "publisher": "CRE synthetic fixture generator",
+  "origin": "python -m cre.ingestion demo",
+  "cadence": "quarterly",
+  "kind": "assessor",
+  "columns": {
+    "pin": "Parcel Number",
+    "owner": "Listed Owner",
+    "mailing_address": "Mailing Address",
+    "assessed_value": "Assessed Value",
+    "tax_year": "Year"
+  },
+  "known_columns": [
+    "Parcel Number",
+    "Listed Owner",
+    "Mailing Address",
+    "Assessed Value",
+    "Year"
+  ],
+  "worksheets": [
+    "Assessment"
+  ],
+  "county_fips": "99001",
+  "county_name": "Synthetic Gwinnett sample",
+  "state_code": "GA",
+  "mapping_version": "1",
+  "rights": {
+    "status": "approved",
+    "methods": [
+      "manual"
+    ],
+    "retain_original": true,
+    "shared_display": true,
+    "export_allowed": true,
+    "basis": "Locally generated fictional records",
+    "attribution": "Synthetic demonstration data",
+    "retention": "Indefinite for local demonstrations"
+  }
+}

@@ -1,0 +1,30 @@
+name: Verify CRE Intelligence
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --python 3.12 --extra test
+      - run: docker compose -f infrastructure/compose.storage-test.yaml up -d
+      - run: curl --retry 20 --retry-connrefused --retry-delay 1 -fsS -o /dev/null http://127.0.0.1:59009/
+      - run: CRE_TEST_S3_ENDPOINT=http://127.0.0.1:59009 scripts/local-test-db -q
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --python 3.12 --extra test
+      - run: npm ci --prefix web
+      - run: npm --prefix web run test && npm --prefix web run build && npm --prefix web run typecheck
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm --prefix web run test:pilot

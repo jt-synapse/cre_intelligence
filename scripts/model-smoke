@@ -1,0 +1,32 @@
+#!/bin/sh
+# Deliberately opt-in. Send a single fictional excerpt to the explicitly selected provider.
+set -eu
+cd "$(dirname "$0")/.."
+: "${CRE_OPENAI_MODEL:?Set CRE_OPENAI_MODEL to the model authorized for this smoke test}"
+CRE_RESEARCH_PROVIDER=openai exec .venv/bin/python - <<'PY'
+import os
+from pathlib import Path
+from uuid import uuid4
+import httpx
+from cre.workflows.research import extract_candidates
+
+if not os.environ.get("OPENAI_API_KEY"):
+    for line in Path(".env.local").read_text().splitlines():
+        key, sep, value = line.partition("=")
+        if sep and key.strip() == "OPENAI_API_KEY":
+            os.environ[key.strip()] = value.strip().strip(chr(34)).strip(chr(39))
+            break
+doc = {"document_id": str(uuid4()), "locator":"page:1",
+       "text":"Fictional test filing. Example Asset Services LLC is the property manager for the Example Commerce Center."}
+try:
+    findings, used = extract_candidates([doc], 4000, uuid4())
+except httpx.HTTPStatusError as e:
+    try:
+        code = e.response.json().get("error", {}).get("code")
+    except ValueError:
+        code = None
+    raise SystemExit(f"Provider returned HTTP {e.response.status_code} ({code or 'no error code'})") from None
+if not findings or any(x.quote not in doc["text"] for x in findings):
+    raise SystemExit("Provider response lacked a source-backed candidate")
+print(f"Source-backed model candidates: {len(findings)}; tokens: {used}")
+PY

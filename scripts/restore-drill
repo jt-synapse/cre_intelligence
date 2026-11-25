@@ -1,0 +1,15 @@
+#!/bin/sh
+# Rehearse a full local restore in a NEW, isolated DB plus a separate immutable object directory.
+set -eu
+cd "$(dirname "$0")/.."
+umask 077
+dest=$(mktemp -d "${TMPDIR:-/tmp}/cre-restore.XXXXXX")
+suffix=$(date +%s)
+db_name="cre_restore_${suffix}_$$"
+docker compose exec -T db pg_dump -U cre_owner -Fc cre > "$dest/database.dump"
+mkdir -p "$dest/objects"
+cp -R .local/objects/. "$dest/objects/"
+docker compose exec -T db createdb -U cre_owner "$db_name"
+docker compose exec -T db pg_restore -U cre_owner --exit-on-error -d "$db_name" < "$dest/database.dump"
+CRE_MIGRATION_URL="postgresql+psycopg://cre_owner:local-owner@127.0.0.1:55439/$db_name" CRE_STORAGE_DIR="$dest/objects" .venv/bin/python -m cre.maintenance verify-restore
+echo "Restored database $db_name; backup and restored objects in $dest"

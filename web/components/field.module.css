@@ -1,0 +1,9 @@
+.summary {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.7rem 0 1rem;
+}
+.summary small {
+  display: block;
+  color: var(--muted);
+}

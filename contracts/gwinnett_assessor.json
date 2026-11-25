@@ -1,0 +1,52 @@
+{
+  "source_key": "gwinnett_assessor",
+  "dataset_key": "gwinnett_assessor",
+  "publisher": "Gwinnett County Assessor",
+  "origin": "https://www.gwinnettcounty.com/government/departments/county-administrator/assessor/property-ownership-database",
+  "cadence": "quarterly",
+  "kind": "assessor",
+  "columns": {
+    "pin": "PIN",
+    "source_lrsn": "LRSNum",
+    "owner": "OWNERNAME1",
+    "owner_line_2": "OWNERNAME2",
+    "mailing_street": "OWNERADDRESS1",
+    "mailing_city": "OWNERCITY",
+    "mailing_state": "OWNERSTATE",
+    "mailing_zip": "OWNERZIP",
+    "source_total_value": "TOTVAL1",
+    "source_tax_total": "TAXTOT1"
+  },
+  "known_columns": [
+    "LRSNum", "PIN", "Public_NeiNum", "PROPERTYSTREET", "PROPERTYCity", "PROPERTYState",
+    "PROPERTYZip", "OWNERNAME1", "OWNERNAME2", "OWNERADDRESS1", "OWNERCITY", "OWNERSTATE",
+    "OWNERZIP", "LEGALAC", "LEGAL1", "PCDESC", "ZONEDESC", "ASSMNT1D", "LANDVAL1", "DWLGVAL1",
+    "OTHVAL1", "TOTVAL1", "TAXLAND1", "TAXDWLG1", "TAXOTH1", "TAXTOT1", "SALE1D", "SALE2D",
+    "SALE3D", "SALE1AMT", "SALE2AMT", "SALE3AMT", "GRANTORNAME1", "GRANTORNAME2", "GRANTORNAME3",
+    "DOC1REF", "DOC2REF", "DOC3REF", "DISTNUM", "DISTNUM_DESC", "PROPCLAS", "PROPCLAS_DESC"
+  ],
+  "join_identifier": "taxpin",
+  "join_dataset": "gwinnett_parcels",
+  "worksheets": ["Sheet1"],
+  "workbook_patterns": ["tax_assessor_property_ownership_data/2026 Property Ownership.xlsx"],
+  "archive_companions": [
+    "tax_assessor_property_ownership_data/CamaFull_Improv.xlsx",
+    "tax_assessor_property_ownership_data/CamaFull_Land.xlsx",
+    "tax_assessor_property_ownership_data/Property Class Code List 2026.xlsx",
+    "tax_assessor_property_ownership_data/TAX DIGEST OWNERSHIP LAYOUT.xlsx"
+  ],
+  "county_fips": "13135",
+  "county_name": "Gwinnett",
+  "state_code": "GA",
+  "mapping_version": "2",
+  "rights": {
+    "status": "approved",
+    "methods": ["manual"],
+    "retain_original": true,
+    "shared_display": false,
+    "export_allowed": false,
+    "basis": "Private operator review, 2026-11-22. The Gwinnett County Assessor explicitly offers this quarterly ZIP for users to download and save. Keeping a private working copy and inspecting its structured data are limited-purpose inferences from that invitation. Commercial product use, redistribution and automated acquisition require a separate determination. County instructions https://www.gwinnettcounty.com/government/departments/county-administrator/assessor/property-ownership-database and distribution https://www.gwinnettcounty.com/content/departments/its/gis-maps/tax_assessor_property_ownership_data.zip",
+    "attribution": "Gwinnett County, Georgia",
+    "retention": "Keep the private original and its derived records only while needed for operator review and reproduction. Retire the dedicated review database and private copies when that purpose ends. Recheck terms before another acquisition."
+  }
+}

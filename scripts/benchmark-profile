@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+"""Measure cached property-detail latency on an already provisioned pilot or local workspace."""
+import argparse
+import json
+import math
+import os
+import statistics
+import time
+import urllib.request
+from uuid import UUID
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("origin")
+parser.add_argument("property_id",type=UUID)
+parser.add_argument("--requests",type=int,default=100)
+args=parser.parse_args()
+if not 20 <= args.requests <= 1000:
+    parser.error("Use 20 to 1,000 requests")
+if args.origin.startswith(("http://127.0.0.1:", "http://localhost:")):
+    token=os.getenv("CRE_BENCHMARK_TOKEN","local-demo")
+elif args.origin.startswith("https://"):
+    token=os.environ["CRE_BENCHMARK_TOKEN"]
+else:
+    parser.error("Use a local demo URL or an HTTPS pilot origin")
+headers={"Authorization":"Bearer "+token}
+if org:=os.getenv("CRE_BENCHMARK_ORG"):
+    headers["X-Organization-ID"]=str(UUID(org))
+url=f"{args.origin.rstrip('/')}/v1/properties/{args.property_id}"
+request=urllib.request.Request(url,headers=headers)
+times=[]
+for i in range(args.requests+5):
+    start=time.perf_counter()
+    with urllib.request.urlopen(request,timeout=10) as result:
+        profile=json.load(result)
+    if str(args.property_id)!=profile["id"] or not profile["parcels"]:
+        raise SystemExit("The supplied property must be current and have a visible parcel")
+    if i>=5:
+        times.append((time.perf_counter()-start)*1000)
+p95=sorted(times)[math.ceil(len(times)*.95)-1]
+print(json.dumps({"requests":len(times),"warmup_requests":5,"median_ms":round(statistics.median(times),2),
+                  "p95_ms":round(p95,2),"target_ms":1000,"passed":p95<1000}))
+raise SystemExit(0 if p95<1000 else 1)

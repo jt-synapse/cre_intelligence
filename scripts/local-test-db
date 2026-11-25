@@ -1,0 +1,35 @@
+#!/bin/sh
+# Three isolated suites share the schema, each receives its own disposable database.
+set -eu
+cd "$(dirname "$0")/.."
+docker compose up -d --wait db
+prefix="cre_$(date +%s)_$$"
+app_db="${prefix}_app_test"
+ingest_db="${prefix}_ingest_test"
+workflow_db="${prefix}_workflow_test"
+created=""
+cleanup() {
+  for db in $created; do
+    docker compose exec -T db dropdb --force -U cre_owner "$db" || true
+  done
+}
+trap cleanup EXIT
+trap 'exit 1' HUP INT TERM
+docker compose exec -T db createdb -U cre_owner "$app_db"
+created="$app_db"
+owner="postgresql+psycopg://cre_owner:local-owner@127.0.0.1:55439"
+runtime="postgresql+psycopg://cre_runtime:local-runtime@127.0.0.1:55439"
+worker="postgresql+psycopg://cre_worker:local-worker@127.0.0.1:55439"
+export CRE_MIGRATION_URL="$owner/$app_db" DATABASE_URL="$runtime/$app_db" CRE_WORKER_URL="$worker/$app_db"
+export CRE_DEMO_MODE=true CRE_TEST_PLATFORM=1
+.venv/bin/alembic upgrade head
+.venv/bin/python -m cre.admin grant
+.venv/bin/python -m cre.admin demo
+DATABASE_URL="$CRE_MIGRATION_URL" .venv/bin/python -m cre.ingestion demo > /dev/null
+for db in "$ingest_db" "$workflow_db"; do
+  docker compose exec -T db createdb -U cre_owner --template="$app_db" "$db"
+  created="$db $created"
+done
+export CRE_INGEST_TEST_URL="$owner/$ingest_db"
+export CRE_WORKFLOW_OWNER_URL="$owner/$workflow_db" CRE_WORKFLOW_RUNTIME_URL="$runtime/$workflow_db" CRE_WORKFLOW_WORKER_URL="$worker/$workflow_db"
+.venv/bin/python -m pytest "$@"

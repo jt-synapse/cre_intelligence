@@ -1,0 +1,44 @@
+{
+  "source_key": "cre_synthetic",
+  "dataset_key": "demo_parcels",
+  "publisher": "CRE synthetic fixture generator",
+  "origin": "python -m cre.ingestion demo",
+  "cadence": "on demand",
+  "kind": "parcels",
+  "columns": {
+    "pin": "PIN",
+    "taxpin": "TAXPIN",
+    "lrsn": "LRSN",
+    "global_id": "GlobalID",
+    "object_id": "OBJECTID",
+    "address": "ADDRESS",
+    "deeded_acres": "DEEDEDACREAGE",
+    "gis_acres": "CALCULATEDACREAGE"
+  },
+  "known_columns": [
+    "PIN",
+    "TAXPIN",
+    "LRSN",
+    "GlobalID",
+    "OBJECTID",
+    "ADDRESS",
+    "DEEDEDACREAGE",
+    "CALCULATEDACREAGE"
+  ],
+  "county_fips": "99001",
+  "county_name": "Synthetic Gwinnett sample",
+  "state_code": "GA",
+  "mapping_version": "1",
+  "rights": {
+    "status": "approved",
+    "methods": [
+      "manual"
+    ],
+    "retain_original": true,
+    "shared_display": true,
+    "export_allowed": true,
+    "basis": "Locally generated fictional records",
+    "attribution": "Synthetic demonstration data",
+    "retention": "Indefinite for local demonstrations"
+  }
+}

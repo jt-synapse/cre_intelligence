@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")/.."
+umask 077
+unset CRE_S3_BUCKET CRE_S3_ENDPOINT CRE_ENV
+export DATABASE_URL='postgresql+psycopg://cre_owner:local-owner@127.0.0.1:55439/cre_gwinnett_internal'
+export CRE_STORAGE_DIR="$PWD/.local/gwinnett-review/objects"
+case "${1:-}" in
+  setup)
+    docker compose up -d --wait db
+    docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U cre_owner -d cre <<'SQL'
+SELECT pg_advisory_lock(174275,13135);
+SELECT 'CREATE DATABASE cre_gwinnett_internal OWNER cre_owner'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='cre_gwinnett_internal')
+\gexec
+REVOKE CONNECT ON DATABASE cre_gwinnett_internal FROM PUBLIC, cre_runtime, cre_worker;
+SQL
+    mkdir -p "$CRE_STORAGE_DIR"
+    CRE_MIGRATION_URL="$DATABASE_URL" .venv/bin/alembic upgrade head
+    .venv/bin/python -m cre.ingestion register contracts/gwinnett_parcels.json --if-missing
+    exec .venv/bin/python -m cre.ingestion register contracts/gwinnett_assessor.json --if-missing
+    ;;
+  index-companions)
+    exec .venv/bin/python -m cre.ingestion.gwinnett_companions
+    ;;
+  index-situs)
+    shift
+    exec .venv/bin/python -m cre.ingestion.gwinnett_situs "$@"
+    ;;
+  lookup-address|benchmark-addresses)
+    exec .venv/bin/python -m cre.ingestion.gwinnett_lookup "$@"
+    ;;
+  verify)
+    require_situs=false
+    if [ "$#" -eq 2 ] && [ "$2" = "--require-situs" ]; then
+      require_situs=true
+    elif [ "$#" -ne 1 ]; then
+      echo 'Usage: scripts/gwinnett-internal verify [--require-situs]' >&2
+      exit 2
+    fi
+    exec docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -v require_situs="$require_situs" -U cre_owner -d cre_gwinnett_internal < contracts/gwinnett-internal-check.sql
+    ;;
+  *)
+    exec .venv/bin/python -m cre.ingestion "$@"
+    ;;
+esac

@@ -1,0 +1,29 @@
+{
+  "name": "cre-intelligence-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "test": "node --test test/*.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:browser": "playwright test",
+    "test:pilot": "python3 test/pilot_stack.py"
+  },
+  "dependencies": {
+    "maplibre-gl": "6.19.0",
+    "next": "16.4.6",
+    "oidc-client-ts": "3.5.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/geojson": "^7946.0.0",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.9"
+  }
+}

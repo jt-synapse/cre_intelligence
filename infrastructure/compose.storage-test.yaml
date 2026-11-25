@@ -1,0 +1,8 @@
+# Loopback-only S3 API emulator for automated adapter tests.
+name: cre-object-test
+services:
+  object-test:
+    image: motoserver/moto:5.1.11
+    environment:
+      MOTO_S3_ALLOW_CROSSACCOUNT_ACCESS: "false"
+    ports: ["127.0.0.1:59009:5000"]

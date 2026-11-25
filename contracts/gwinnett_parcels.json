@@ -1,0 +1,51 @@
+{
+  "source_key": "gwinnett_gis",
+  "dataset_key": "gwinnett_parcels",
+  "publisher": "Gwinnett County GIS",
+  "origin": "https://services3.arcgis.com/RfpmnkSAQleRbndX/ArcGIS/rest/services/Property_and_Tax/FeatureServer/0",
+  "cadence": "on demand",
+  "kind": "parcels",
+  "columns": {
+    "pin": "PIN",
+    "taxpin": "TAXPIN",
+    "lrsn": "LRSN",
+    "global_id": "GlobalID",
+    "object_id": "OBJECTID",
+    "address": "ADDRESS",
+    "deeded_acres": "DEEDEDACREAGE",
+    "gis_acres": "CALCULATEDACREAGE"
+  },
+  "known_columns": [
+    "OBJECTID",
+    "PIN",
+    "ADDRESS",
+    "LOT",
+    "PARCELTYPE",
+    "EXEMPTION_TYPE",
+    "USERNAME",
+    "DATEENTERED",
+    "DEEDEDACREAGE",
+    "ACREAGE_TEXT",
+    "CALCULATEDACREAGE",
+    "TAXPIN",
+    "LRSN",
+    "GlobalID",
+    "created_date",
+    "last_edited_user",
+    "last_edited_date"
+  ],
+  "county_fips": "13135",
+  "county_name": "Gwinnett",
+  "state_code": "GA",
+  "mapping_version": "2",
+  "rights": {
+    "status": "approved",
+    "methods": ["manual"],
+    "retain_original": true,
+    "shared_display": false,
+    "export_allowed": false,
+    "basis": "Gwinnett County GIS authorizes portal downloads and limits the Land Parcels item to the recipient's internal use. The county prohibits distribution or sale to any person or entity. This approval covers a user-directed download for private internal evaluation. https://gcgis-gwinnettcountyga.hub.arcgis.com/api/v3/datasets/340cdb68491e49bea5236cecdf66f658_0",
+    "attribution": "Gwinnett County, Georgia",
+    "retention": "Keep originals and derived data in recipient-controlled private storage for internal evaluation. The published item specifies no retention period."
+  }
+}

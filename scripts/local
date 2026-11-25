@@ -1,0 +1,29 @@
+#!/bin/sh
+# Local development entry points. All credentials here belong to the loopback Compose stack.
+set -eu
+cd "$(dirname "$0")/.."
+export CRE_MIGRATION_URL="${CRE_MIGRATION_URL:-postgresql+psycopg://cre_owner:local-owner@127.0.0.1:55439/cre}"
+export DATABASE_URL="${DATABASE_URL:-postgresql+psycopg://cre_runtime:local-runtime@127.0.0.1:55439/cre}"
+export CRE_WORKER_URL="${CRE_WORKER_URL:-postgresql+psycopg://cre_worker:local-worker@127.0.0.1:55439/cre}"
+export CRE_DEMO_MODE="${CRE_DEMO_MODE:-true}"
+case "${1:-help}" in
+  setup)
+    docker compose up -d --wait db
+    .venv/bin/alembic upgrade head
+    .venv/bin/python -m cre.admin grant
+    .venv/bin/python -m cre.admin demo
+    DATABASE_URL="$CRE_MIGRATION_URL" .venv/bin/python -m cre.ingestion demo --count 6
+    ;;
+  api) exec .venv/bin/uvicorn cre.main:app --host 127.0.0.1 --port "${PORT:-8000}" ;;
+  worker)
+    shift
+    export DATABASE_URL="$CRE_WORKER_URL"
+    if [ "${CRE_RESEARCH_PROVIDER:-disabled}" = "openai" ] && [ -f .env.local ]; then
+      exec uv --cache-dir .cache/uv run --no-sync --env-file .env.local python -m cre.workflows.worker "$@"
+    fi
+    exec .venv/bin/python -m cre.workflows.worker "$@" ;;
+  web) cd web; export CRE_API_URL="${CRE_API_URL:-http://127.0.0.1:8000}"; exec npm run dev -- --hostname 127.0.0.1 ;;
+  ingest) shift; DATABASE_URL="$CRE_MIGRATION_URL" exec .venv/bin/python -m cre.ingestion "$@" ;;
+  admin) shift; exec .venv/bin/python -m cre.admin "$@" ;;
+  *) echo 'Usage: scripts/local {setup|api|worker|web|ingest|admin}'; exit 2 ;;
+esac
